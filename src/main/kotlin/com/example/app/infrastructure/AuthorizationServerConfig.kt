@@ -48,5 +48,6 @@ class AuthorizationServerConfig(
             .authorizedGrantTypes("authorization_code", "refresh_token")
             .scopes("read")
             .redirectUris("http://localhost:9090/home")
+            .accessTokenValiditySeconds(java.time.Duration.ofHours(1).toSeconds().toInt())
     }
 }
