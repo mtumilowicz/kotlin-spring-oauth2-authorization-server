@@ -20,8 +20,12 @@ class WebSecurityConfig : WebSecurityConfigurerAdapter() {
     @Bean
     override fun userDetailsService(): UserDetailsService =
         InMemoryUserDetailsManager(
-            User.withUsername("a")
+            User.withUsername("user1")
                 .password("1")
+                .roles("read")
+                .build(),
+            User.withUsername("user2")
+                .password("2")
                 .roles("read")
                 .build()
         )
