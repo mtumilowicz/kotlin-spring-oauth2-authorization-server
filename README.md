@@ -241,8 +241,9 @@
         * distinction is important because OAuth 2.0 flow is designed to "grant authorization" and
           is not meant to be used to "authenticate"
 
-
-http://localhost:8080/oauth/authorize
-http://localhost:8080/oauth/token
-client
-secret
+## insomnia
+* GET: http://localhost:9090/hello
+* http://localhost:8080/oauth/authorize
+* http://localhost:8080/oauth/token
+* client
+* secret
