@@ -228,8 +228,10 @@
       is not meant to be used to "authenticate"
 
 ## insomnia
-* GET: http://localhost:9090/hello
-* http://localhost:8080/oauth/authorize
-* http://localhost:8080/oauth/token
-* client1
-* secret1
+* GET: some service url
+* tab Auth: OAuth 2.0
+    * Grant Type: Authorization Code
+    * Authorization URL: http://localhost:8080/oauth/authorize
+    * Access Token URL: http://localhost:8080/oauth/token
+    * Client Id: client1
+    * Client Secret: secret1
