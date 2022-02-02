@@ -59,7 +59,7 @@
     * application uses them to prove it has authenticated a user
     * tokens can even be regular strings
         * example: UUID
-    * flow
+    * steps
         1. X authenticates with his credentials
         1. app generates a token
         1. app returns the token to X
@@ -136,15 +136,12 @@
         * the longer the token, the more time the cryptographic algorithm needs for signing it
 
 ## cryptographic keys
-* overview
-
-    ![alt text](https://idea-instructions.com/public-key.png)
 * math
-    * the idea of RSA is based on the fact that it is difficult to factorize a large integer
-        * public key consists of two numbers where one number is multiplication of two large prime numbers
-        * private key is also derived from the same two prime numbers
+    * the idea of RSA: it is difficult to factorize a large integer
+        * public key: (multiplication of two large prime numbers, random number)
+        * private key: derived from the same two prime numbers
         * encryption strength totally lies on the key size
-            * if we double or triple the key size, the strength of encryption increases exponentially
+            * strength of encryption increases exponentially
     * selecting public & private key
         1. select two prime numbers, `p = 11`, `q = 17`
         1. calculate product (very fast): `p * q = 187`
@@ -165,8 +162,8 @@
         * `156^107 mod 187 = 7`
 * symmetric vs asymmetric
     * symmetric
-        * only one key (symmetric key) is used, and the same key is used to encrypt and decrypt
-          the message
+        * only one key (symmetric key)
+        * the same key is used to encrypt and decrypt the message
         * secret key is shared
         * risk of compromise is higher
     * asymmetric
@@ -177,19 +174,8 @@
 ## oauth2
 * delegated authorization
     * how can I allow an app to access my data without necessarily giving it my password?
-    * is the ability of an external app to access resources
+    * authorization is the ability of an external app to access resources
     * example: Spotify trying to access your facebook friends list to import it into Spotify
-* analogy
-    * pick up the books or ask a friend to collect them for me
-    * when my friend asks for my order, the lady from the shop calls me to confirm I’ve sent
-      someone to fetch my books
-    * after my confirmation, my friend collects the package and brings it to me later in the day
-    * books are the resources
-        * I’m the user (resource owner)
-        * my friend that picks them up for me is the client
-        * the lady selling the books is the authorization server
-        * observe that to grant permission to my friend (client) to collect the books (resources),
-          the lady (authorization server) selling the books calls me (user) directly
 * implementations: Keycloak or Okta
 * defines four roles:
     * Resource Owner
@@ -200,13 +186,12 @@
         * server issuing access token to the client
         * token will be used for the client to request the resource server
         * stores the user’s and client’s credentials
-            * uses the client credentials so that it only allows known applications to be authorized by it
+            * client credentials: allows known applications to be authorized by it
     * Resource Server
         * server hosting protected data
             * example: Facebook hosting your profile and personal information
         * client obtains an access token from the authorization server
-            * uses it to call for resources on the resource server by adding the token
-              to the HTTP request headers
+            * adds the token to the HTTP request headers (to resource server)
         * three options for implementing token validation at the resource server level
             * resource server directly call the authorization server to verify an issued token
                 * remember the rule of thumb: the network is not 100% reliable
@@ -217,33 +202,34 @@
             * cryptographic signatures
                 * authorization server signs the token when issuing it
                     * resource server validates the signature
-                * when issuing an access token, the authorization server uses a private key to sign it
-                    * to verify a token, the resource server only needs to check if the signature is valid
+                * authorization server uses a private key to sign it
+                * resource server uses a public key to verify signature
                 * commonly used
                     * google, twitter etc
                         * https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/
-* refresh tokens to obtain new access tokens
+* refresh tokens
     * token that doesn’t expire is too powerful
-    * to obtain a new access token, the client can rerun the flow, depending on the grant type used
+    * to obtain a new access token, the client can rerun the flow
         * not really user friendly
-        * example: 20-minute lifespan - app would redirect back about three times every hour to log in again
-    * app uses the refresh token to obtain a new access token instead of having to reauthenticate
-        * storing the refresh token is safer because you can revoke it if you find that it was exposed
+        * example: 20-minute lifespan
+            * app would redirect back about three times every hour to log in again
+    * used to obtain a new access token instead of reauthentication
+        * storing the refresh token is safer: you can revoke it if you find that it was exposed
 * vulnerabilities
     * with a user logged in, CSRF is possible if the application doesn’t apply any CSRF protection mechanism
     * token hijacking
-* OpenId Connect
-    * allows for "Federated Authentication"
-    * are built using the Oauth2.0 and then adding a few additional steps over it to allow
-      for "federated authentication"
-    * Federated Authentication is a completely different from Delegated Authorization
-        * example: Federated Authentication is logging to Spotify using your facebook credentials
-        * distinction is important because OAuth 2.0 flow is designed to "grant authorization" and
-          is not meant to be used to "authenticate"
+
+## OpenId Connect
+* allows for "Federated Authentication"
+* are built using the Oauth2.0 and then adding a few additional steps over
+* Federated Authentication is a completely different from Delegated Authorization
+    * example: Federated Authentication is logging to Spotify using your facebook credentials
+    * distinction is important because OAuth 2.0 flow is designed to "grant authorization" and
+      is not meant to be used to "authenticate"
 
 ## insomnia
 * GET: http://localhost:9090/hello
 * http://localhost:8080/oauth/authorize
 * http://localhost:8080/oauth/token
-* client
-* secret
+* client1
+* secret1
