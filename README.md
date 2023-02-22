@@ -135,42 +135,6 @@
         * if the token is long, it slows the request
         * the longer the token, the more time the cryptographic algorithm needs for signing it
 
-## cryptographic keys
-* math
-    * the idea of RSA: it is difficult to factorize a large integer
-        * public key: (multiplication of two large prime numbers, random number)
-        * private key: derived from the same two prime numbers
-        * encryption strength totally lies on the key size
-            * strength of encryption increases exponentially
-    * selecting public & private key
-        1. select two prime numbers, `p = 11`, `q = 17`
-        1. calculate product (very fast): `p * q = 187`
-        1. select random number < product, `e = 3`
-        1. find `d` so that `(d * e - 1) mod (p - 1)*(q - 1) = 0`
-            * `(d * 3 - 1) mod (10 * 16) = 0`
-            * `320 mod 160 = 0` // fill a random number that satisfies the equation
-            * `(321 - 1) mod 160 = 0`
-            * `107 * 3 = 321 => d = 107`
-        * `(p*q, e)` - public key, `d` - private key
-    * lets encrypt G (7th letter of alphabet)
-        * `p*q = 187`, `e = 3`
-        * `7^e = 7^3 = 343` // G ~ 7
-        * `343 mod 187 = 156`
-    * lets decrypt 156
-        * `d = 107`
-        * `156^d = 156^107 = ...`
-        * `156^107 mod 187 = 7`
-* symmetric vs asymmetric
-    * symmetric
-        * only one key (symmetric key)
-        * the same key is used to encrypt and decrypt the message
-        * secret key is shared
-        * risk of compromise is higher
-    * asymmetric
-        * two different cryptographic keys (asymmetric keys: public and private) are
-          used for encryption and decryption
-        * private key is not shared
-
 ## oauth2
 * delegated authorization
     * how can I allow an app to access my data without necessarily giving it my password?
