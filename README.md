@@ -22,6 +22,17 @@
     * [2019 - Grzegorz Krol - Uwierzytelnienie oraz Autoryzacja w Świecie Mediów i Dostawców Tożsamości](https://www.youtube.com/watch?v=HJhbAxtqFnk)
     * https://jwt.io/introduction/
     * https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims
+    * https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-proof-key-for-code-exchange-pkce
+    * https://oauth.net/2/pkce/
+    * https://www.oauth.com/oauth2-servers/pkce/authorization-request/
+    * https://dropbox.tech/developers/pkce--what-and-why-
+    * https://oauth.net/2/grant-types/implicit/
+    * https://developer.okta.com/blog/2019/08/22/okta-authjs-pkce
+    * https://www.f5.com/labs/articles/cisotociso/securing-apis-in-banking-with-oauth-and-pkce
+    * https://docs.wso2.com/display/IS530/Mitigating+Authorization+Code+Interception+Attacks
+    * https://blog.netcetera.com/the-idea-behind-mitigation-of-oauth-2-0-code-interception-attacks-15de246cce41
+    * https://security.stackexchange.com/questions/175465/what-is-pkce-actually-protecting
+    * https://developer.okta.com/docs/concepts/oauth-openid/#is-your-client-public
 
 ## general
 * authentication
@@ -197,6 +208,51 @@
       is not meant to be used to "authenticate"
 
 ## PKCE
+* stands for: Proof Key for Code Exchange
+* problem with standard authorization code flow
+    * process relies on apps providing a `client_secret` in the final request for an access token
+    * solution: implicit flow
+        * simplified OAuth flow
+            * access token was returned immediately without an extra authorization code exchange step
+        * reason
+            * old days: most providers did not allow cross-site POST requests to a `/token` endpoint
+        * not recommended
+            * no confirmation that authorization token has been received by the client
+        * solves problem, but with the added risk
+            * exposing the access token in the redirect URI at the end of the authorization flow
+            * makes the flow vulnerable to different types of network and malicious app interceptions
+        * in November of 2018, new guidance was released that effectively deprecated this flow
+            * use PKCE
+* Authorization Code Interception Attack
+    * OAuth 2.0 public clients are susceptible to the authorization code interception attack
+        * public client = when an end user could view and modify the code
+            * example: Single-Page Apps (SPAs) or any mobile or native applications
+            * client secret is available in the web code, openly accessibly in the browser
+        * confidential/private client = client can use client authentication such as a client secret
+    * attacker intercepts the authorization code returned from the authorization endpoint within a communication path
+    not protected by Transport Layer Security (TLS)
+        * example: mobile OS
+            * allows apps to register to handle redirect URIs
+            * malicious app can register and receive redirects with the authorization code for legitimate apps
+* is not a replacement for a client secret
+    * is recommended even if a client is using a client secret
+* it does not allow treating a public client as a confidential client
+* how it works
+    1. user clicks Login within the application
+    1. Auth0's SDK creates a cryptographically-random code_verifier and from this generates a code_challenge
+        * code_challenge = Base64-URL-encoded string of the SHA256 hash of the code verifier
+    1. Auth0's SDK redirects the user to the Auth0 Authorization Server (/authorize endpoint) along with the code_challenge
+    1. Auth0 Authorization Server redirects the user to the login and authorization prompt
+    1. user authenticates using one of the configured login options
+        * may see a consent page listing the permissions Auth0 will give to the application
+    1. Auth0 Authorization Server stores the code_challenge and redirects the user back to the application with an authorization code, which is good for one use
+        * either stores code_challenge in the database along with the authorization code
+            * or if you’re using self-encoded authorization codes then it can be included in the code itself
+    1. Auth0's SDK sends this code and the code_verifier (created in step 2) to the Auth0 Authorization Server (/oauth/token endpoint)
+    1. Auth0 Authorization Server verifies the code_challenge and code_verifier
+    1. Auth0 Authorization Server responds with an ID token and access token (and optionally, a refresh token)
+    1. application can use the access token to call an API to access information about the user
+    1. API responds with requested data
 
 ## insomnia
 * GET: some service url
