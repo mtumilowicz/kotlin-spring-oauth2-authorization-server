@@ -21,6 +21,7 @@
     * [GOTO 2020 • OAuth and OpenID Connect in Plain English • Nate Barbettini](https://www.youtube.com/watch?v=sSy5-3IkXHE)
     * [2019 - Grzegorz Krol - Uwierzytelnienie oraz Autoryzacja w Świecie Mediów i Dostawców Tożsamości](https://www.youtube.com/watch?v=HJhbAxtqFnk)
     * https://jwt.io/introduction/
+    * https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims
 
 ## general
 * authentication
@@ -111,7 +112,11 @@
             * contains the claims - statements about user and additional data
                 * registered claims
                     * predefined claims which are not mandatory but recommended
-                    * example: exp - expiration time
+                    * important ones
+                        * `iss` (issuer): issuer of the JWT
+                        * `sub` (subject): subject of the JWT (the user)
+                        * `aud` (audience): recipient for which the JWT is intended
+                        * `exp` (expiration time): time after which the JWT expires
                 * public claims
                     * defined for public consumption
                     * required to be collision resistant
@@ -190,6 +195,8 @@
     * example: Federated Authentication is logging to Spotify using your facebook credentials
     * distinction is important because OAuth 2.0 flow is designed to "grant authorization" and
       is not meant to be used to "authenticate"
+
+## PKCE
 
 ## insomnia
 * GET: some service url
