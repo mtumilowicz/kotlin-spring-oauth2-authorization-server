@@ -250,7 +250,10 @@
 ## PKCE
 * stands for: Proof Key for Code Exchange
 * problem with standard authorization code flow
-    * what to do if the client secret cannot be kept private?
+    1. if hacker intercepts authorization code he could simulate the flow
+        * he can use some other client and access your (public) API directly and thus retrieve the
+        tokens just the same
+    1. what to do if the client secret cannot be kept private?
         * native apps
             * decompiling the app will reveal the Client Secret, which is bound to the app and
             is the same for all users and devices
@@ -260,8 +263,6 @@
             * they do not have a real way of authenticating themselves
 * is not a replacement for a client secret
     * is recommended even if a client is using a client secret
-        * hacker can use some other client and access your (public) API directly and thus retrieve the
-        tokens just the same
     * allows the authorization server to validate that the client application exchanging the authorization
     code is the same client application that requested it
 * it does not allow treating a public client as a confidential client
