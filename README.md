@@ -33,6 +33,11 @@
     * https://blog.netcetera.com/the-idea-behind-mitigation-of-oauth-2-0-code-interception-attacks-15de246cce41
     * https://security.stackexchange.com/questions/175465/what-is-pkce-actually-protecting
     * https://developer.okta.com/docs/concepts/oauth-openid/#is-your-client-public
+    * https://stackoverflow.com/questions/16321455/what-is-the-difference-between-the-oauth-authorization-code-and-implicit-workflo
+    * https://www.scottbrady91.com/oauth/client-authentication-vs-pkce
+    * https://developers.onelogin.com/openid-connect/guides/auth-flow-pkce
+    * https://stackoverflow.com/questions/70767605/understanding-benefits-of-pkce-vs-authorization-code-grant
+    * https://medium.com/identity-beyond-borders/auth-code-flow-with-pkce-a75ee203e242
 
 ## general
 * authentication
@@ -187,6 +192,31 @@
                 * commonly used
                     * google, twitter etc
                         * https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/
+* authorization code flow
+    * exchanges an authorization code for a token
+    * you have to also pass along your app’s Client Secret
+    * use cases: Server side web applications where the source code is not exposed publicly
+    * steps
+        1. user clicks on a login link in the web application
+        1. user is redirected to an OAuth authorization server
+        1. user provides credentials
+            * typically, the user is shown a list of permissions that will be granted
+        1. user is redirected to the application, with a one-time authorization code
+            * why authorization code is returned and not the token itself
+                 * if the access token would be returned directly (instead of authorization code)
+                 machine with the browser/app would have access to it
+                 * don't trust the users machine to hold tokens but you do trust your own servers
+        1. app receives the user’s authorization code
+            * forwards it along with the Client ID and Client Secret, to the OAuth authorization server
+                * why to not pass client secret in the first step?
+                    * you could not trust the client (user/his browser which try to use you application)
+                * keeps sensitive information (client secret) from the browser
+                * uses secure channel of communication
+                    * connection between client application and authorization server is hidden from user
+                        * it could be very secured channel not the same as the one from user to client application
+        1. authorization server sends an ID Token, Access Token, and an optional Refresh Token
+            * allows for the final access-token to never reach and never be stored on the machine with the browser/app
+        1. web application can then use the Access Token to gain access to the target API
 * refresh tokens
     * token that doesn’t expire is too powerful
     * to obtain a new access token, the client can rerun the flow
@@ -210,49 +240,50 @@
 ## PKCE
 * stands for: Proof Key for Code Exchange
 * problem with standard authorization code flow
-    * process relies on apps providing a `client_secret` in the final request for an access token
-    * solution: implicit flow
-        * simplified OAuth flow
-            * access token was returned immediately without an extra authorization code exchange step
-        * reason
-            * old days: most providers did not allow cross-site POST requests to a `/token` endpoint
-        * not recommended
-            * no confirmation that authorization token has been received by the client
-        * solves problem, but with the added risk
-            * exposing the access token in the redirect URI at the end of the authorization flow
-            * makes the flow vulnerable to different types of network and malicious app interceptions
-        * in November of 2018, new guidance was released that effectively deprecated this flow
-            * use PKCE
-* Authorization Code Interception Attack
-    * OAuth 2.0 public clients are susceptible to the authorization code interception attack
-        * public client = when an end user could view and modify the code
-            * example: Single-Page Apps (SPAs) or any mobile or native applications
-            * client secret is available in the web code, openly accessibly in the browser
-        * confidential/private client = client can use client authentication such as a client secret
-    * attacker intercepts the authorization code returned from the authorization endpoint within a communication path
-    not protected by Transport Layer Security (TLS)
-        * example: mobile OS
-            * allows apps to register to handle redirect URIs
-            * malicious app can register and receive redirects with the authorization code for legitimate apps
+    * what to do if the client secret cannot be kept private?
+        * native apps
+            * decompiling the app will reveal the Client Secret, which is bound to the app and
+            is the same for all users and devices
+        * single-page apps
+            * cannot securely store a Client Secret because their entire source is available to the browser
+        * called public clients (when an end user could view and modify the code)
+            * they do not have a real way of authenticating themselves
 * is not a replacement for a client secret
     * is recommended even if a client is using a client secret
+    * allows the authorization server to validate that the client application exchanging the authorization
+    code is the same client application that requested it
 * it does not allow treating a public client as a confidential client
+* PKCE does not protect against "fake apps"
+    * only mitigates the case when another app on the same device try to steal the token that is issued for another app
+    * think of a Bank app, it is not good if another app on the device can get the token that the Bank app is using
+        * how stealing can be done?
+            ![txt](img/stealing_auth_code.png)
+            * malicious app is registered with the same custom URI (redirect URI) as the legitimate app
+* vs Authorization Code flow: don't require to provide a client_secret
+    * reduces security risks for native apps, as embedded secrets aren’t required in source code
 * how it works
-    1. user clicks Login within the application
-    1. Auth0's SDK creates a cryptographically-random code_verifier and from this generates a code_challenge
-        * code_challenge = Base64-URL-encoded string of the SHA256 hash of the code verifier
-    1. Auth0's SDK redirects the user to the Auth0 Authorization Server (/authorize endpoint) along with the code_challenge
-    1. Auth0 Authorization Server redirects the user to the login and authorization prompt
-    1. user authenticates using one of the configured login options
-        * may see a consent page listing the permissions Auth0 will give to the application
-    1. Auth0 Authorization Server stores the code_challenge and redirects the user back to the application with an authorization code, which is good for one use
-        * either stores code_challenge in the database along with the authorization code
-            * or if you’re using self-encoded authorization codes then it can be included in the code itself
-    1. Auth0's SDK sends this code and the code_verifier (created in step 2) to the Auth0 Authorization Server (/oauth/token endpoint)
-    1. Auth0 Authorization Server verifies the code_challenge and code_verifier
-    1. Auth0 Authorization Server responds with an ID token and access token (and optionally, a refresh token)
-    1. application can use the access token to call an API to access information about the user
-    1. API responds with requested data
+    * summary
+        * in place of the client_secret, the client app creates a unique string value, code_verifier
+        * code_challenge = hashed and encoded code_verifier
+        * when the client app initiates the first part of the Authorization Code flow, it sends a hashed code_challenge
+        * then the client app requests an access_token in exchange for the authorization code
+            * client app must include the original unique string value in the code_verifier
+    * steps
+        1. user clicks Login within the application
+        1. application creates a cryptographically-random code_verifier and code_challenge
+            * code_challenge = Base64-URL-encoded string of the SHA256 hash of the code verifier
+        1. user is redirected to an OAuth authorization server
+        1. user provides credentials
+            * typically, the user is shown a list of permissions that will be granted
+            * authorization server stores the code_challenge  in the database along with the authorization code
+        1. user is redirected to the application, with a one-time authorization code
+            * authorization server stores the code_challenge
+        1. app receives the user’s authorization code
+            * forwards it along with the Client ID and original code_verifier, to the OAuth authorization server
+        1. authorization server verifies the code_challenge and code_verifier
+        1. authorization server responds with an ID token and access token (and optionally, a refresh token)
+        1. application can use the access token to call an API to access information about the user
+        1. API responds with requested data
 
 ## insomnia
 * GET: some service url
