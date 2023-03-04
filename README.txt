@@ -38,6 +38,8 @@
     * https://developers.onelogin.com/openid-connect/guides/auth-flow-pkce
     * https://stackoverflow.com/questions/70767605/understanding-benefits-of-pkce-vs-authorization-code-grant
     * https://medium.com/identity-beyond-borders/auth-code-flow-with-pkce-a75ee203e242
+    * https://stackoverflow.com/questions/74174249/redirect-url-for-authorization-code-design-flaw-in-spec
+    * https://stackoverflow.com/questions/67812472/oauth-authorization-code-flow-security-question-authorization-code-intercepted
 
 ## general
 * authentication
@@ -202,10 +204,16 @@
         1. user provides credentials
             * typically, the user is shown a list of permissions that will be granted
         1. user is redirected to the application, with a one-time authorization code
+            * authorization code will be available in the `code` URL parameter
+                * from specification: authorization code will be sent via HTTP 302 "redirect" URL to the client
             * why authorization code is returned and not the token itself
-                 * if the access token would be returned directly (instead of authorization code)
-                 machine with the browser/app would have access to it
-                 * don't trust the users machine to hold tokens but you do trust your own servers
+                * if the access token would be returned directly (instead of authorization code)
+                machine with the browser/app would have access to it
+                * don't trust the users machine to hold tokens but you do trust your own servers
+            * note that authorization code is used exactly once
+                * in many scenarios that an attacker might get access to the code, it's already been exchanged
+                for an access token and therefore useless
+                * to mitigate the risk of stealing authorization code you can use PKCE
         1. app receives the user’s authorization code
             * forwards it along with the Client ID and Client Secret, to the OAuth authorization server
                 * why to not pass client secret in the first step?
@@ -215,7 +223,9 @@
                     * connection between client application and authorization server is hidden from user
                         * it could be very secured channel not the same as the one from user to client application
         1. authorization server sends an ID Token, Access Token, and an optional Refresh Token
-            * allows for the final access-token to never reach and never be stored on the machine with the browser/app
+            * in the end the authorization server (e.g: "Login with Facebook") will talk directly with
+            he client (say, your server-side BFF) that will ultimately access the resource, so that
+            the user-agent never has direct access
         1. web application can then use the Access Token to gain access to the target API
 * refresh tokens
     * token that doesn’t expire is too powerful
@@ -250,6 +260,8 @@
             * they do not have a real way of authenticating themselves
 * is not a replacement for a client secret
     * is recommended even if a client is using a client secret
+        * hacker can use some other client and access your (public) API directly and thus retrieve the
+        tokens just the same
     * allows the authorization server to validate that the client application exchanging the authorization
     code is the same client application that requested it
 * it does not allow treating a public client as a confidential client
@@ -268,6 +280,8 @@
         * when the client app initiates the first part of the Authorization Code flow, it sends a hashed code_challenge
         * then the client app requests an access_token in exchange for the authorization code
             * client app must include the original unique string value in the code_verifier
+        * communication between the client and authorization server should be through a secured channel(TLS) 
+        so the codes cannot be intercepted
     * steps
         1. user clicks Login within the application
         1. application creates a cryptographically-random code_verifier and code_challenge
